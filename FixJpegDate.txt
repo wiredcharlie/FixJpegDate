@@ -1,1 +1,68 @@
-use scripting additionsuse framework "Foundation"use framework "AppKit" -- for image stuffset MyFolder to (choose folder with prompt "Select folder:")tell application "Finder"	set fl to files of folder MyFolder as alias listend tellrepeat with f in fl		set POSIXPath to POSIX path of f		tell application "Finder" to set {fType, nExt} to ({file type, name extension} of file f)		if (fType is "JPG ") or (nExt is "jpg") or (nExt is "jpeg") then				try			set theImageRep to (current application's NSBitmapImageRep's imageRepWithContentsOfFile:POSIXPath)			set theEXIFData to (theImageRep's valueForProperty:(current application's NSImageEXIFData))						set DateTimeOriginal to get DateTimeOriginal of theEXIFData as string									set DateTimeOriginal to (do shell script "echo " & DateTimeOriginal & " | sed -e 's/ //g' | sed -e 's/://g' | sed 's/..$//'")						do shell script "touch -t " & DateTimeOriginal & " '" & POSIXPath & "'"		end try			end if		tell application "Finder" to open MyFolder as list	end repeat
+
+use scripting additions
+use framework "Foundation"
+use framework "AppKit" -- for image stuff
+
+set MyFolder to (choose folder with prompt "Select folder:")
+
+
+tell application "Finder"
+	set fl to files of folder MyFolder as alias list
+end tell
+
+
+-- Update the initial progress information
+set theImageCount to length of fl
+set progress total steps to theImageCount
+set progress completed steps to 0
+set progress description to "Processing Images..."
+set progress additional description to "Preparing to process."
+
+
+set counter to 0
+
+
+set counter to 0
+
+repeat with f in fl
+	
+	
+	
+	set POSIXPath to POSIX path of f
+	
+	tell application "Finder" to set {fType, nExt} to ({file type, name extension} of file f)
+	
+	-- Update the progress detail
+	set progress additional description to "Processing image " & counter & " of " & theImageCount
+	
+	
+	if (fType is "JPG ") or (nExt is "jpg") or (nExt is "jpeg") then
+		
+		try
+			set theImageRep to (current application's NSBitmapImageRep's imageRepWithContentsOfFile:POSIXPath)
+			set theEXIFData to (theImageRep's valueForProperty:(current application's NSImageEXIFData))
+			
+			set DateTimeOriginal to get DateTimeOriginal of theEXIFData as string
+			
+			
+			set DateTimeOriginal to (do shell script "echo " & DateTimeOriginal & " | sed -e 's/ //g' | sed -e 's/://g' | sed 's/..$//'")
+			
+			do shell script "touch -t " & DateTimeOriginal & " '" & POSIXPath & "'"
+		end try
+		
+	end if
+	
+	-- Increment the progress
+	set progress completed steps to counter
+	
+	set counter to counter + 1
+	
+end repeat
+
+tell application "Finder" to open MyFolder as list
+
+-- Reset the progress information
+set progress total steps to 0
+set progress completed steps to 0
+set progress description to ""
+set progress additional description to ""
